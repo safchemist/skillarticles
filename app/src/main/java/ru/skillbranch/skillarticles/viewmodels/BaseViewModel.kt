@@ -5,8 +5,8 @@ import androidx.lifecycle.*
 import java.lang.IllegalArgumentException
 
 abstract class BaseViewModel<T>(initState: T) : ViewModel() {
-    protected val notifications = MutableLiveData<Event<Notify>>()
-    protected val state: MediatorLiveData<T> = MediatorLiveData<T>().apply {
+    val notifications = MutableLiveData<Event<Notify>>()
+    val state: MediatorLiveData<T> = MediatorLiveData<T>().apply {
         value = initState
     }
 
@@ -57,6 +57,10 @@ class Event<out E>(private val content: E) {
             hasBeenHandled = true
             content
         }
+    }
+
+    fun peekContent(): E {
+        return content
     }
 }
 

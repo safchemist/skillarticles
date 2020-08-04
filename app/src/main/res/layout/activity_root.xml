@@ -30,7 +30,6 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_dodgeInsetEdges="bottom"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <TextView
@@ -56,6 +55,7 @@
         android:id="@+id/bottombar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="?actionBarSize"
         android:theme="@style/ArticleBarsTheme"
         app:layout_insetEdge="bottom"
         android:elevation="4dp"
