@@ -3,9 +3,9 @@
 import android.os.Bundle
 import android.view.Menu
 import android.widget.ImageView
-import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.material.snackbar.Snackbar
@@ -27,26 +27,23 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
          menuInflater.inflate(R.menu.menu_search, menu)
          val menuItem = menu?.findItem(R.id.action_search)
 
-         menuItem?.setOnMenuItemClickListener {
-             it.expandActionView()
-             viewModel.handleIsSearch(true)
-             (menuItem.actionView as SearchView).onActionViewExpanded()
-             false
-         }
+         menuItem?.expandActionView()
+         viewModel.handleIsSearch(true)
 
-         with(menu?.findItem(R.id.action_search)?.actionView as SearchView) {
+         with(menuItem?.actionView as SearchView) {
+             onActionViewExpanded()
+
              setOnQueryTextListener(object : SearchView.OnQueryTextListener{
                  override fun onQueryTextSubmit(query: String?): Boolean {
                      viewModel.handleSearchQuery(query)
-                     return false
-                 }
+                     return false                 }
 
                  override fun onQueryTextChange(newText: String?): Boolean {
                      if(!newText.isNullOrBlank()) {
                          viewModel.handleSearchQuery(newText)
                      }
-                     return false
-                 }
+                     return false                 }
+
              })
 
              setOnQueryTextFocusChangeListener { v, hasFocus ->
@@ -56,7 +53,7 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
              }
 
              if(viewModel.getCurrentState()!!.isSearch) {
-                 menuItem?.expandActionView()
+                 menuItem.expandActionView()
                  onActionViewExpanded()
                  setQuery(viewModel.getCurrentState()?.searchQuery, true)
              }
@@ -118,6 +115,12 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 
          toolbar.title = data.title ?: "Skill Articles"
          toolbar.subtitle = data.category ?: "loading..."
+
+         if(data.categoryIcon != null) {
+
+             val lo = getDrawable(data.categoryIcon as Int)
+         }
+
          if(data.categoryIcon != null) toolbar.logo = this.resources.getDrawable(data.categoryIcon as Int)
      }
 
