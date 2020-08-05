@@ -30,9 +30,6 @@ class BottombarBehavior : CoordinatorLayout.Behavior<Bottombar>() {
         type: Int
     ) {
         child.translationY = MathUtils.clamp(child.translationY + dy, 0f, child.minHeight.toFloat())
-
-//        Log.i("elina", "${MathUtils.clamp(child.translationY + dy, 0f, child.minimumHeight.toFloat())}")
-        Log.i("elina", "${150}")
         super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
     }
 }

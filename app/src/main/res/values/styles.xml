@@ -6,7 +6,6 @@
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="android:statusBarColor">@color/color_primary_dark</item>
-
         <item name="android:textColorSecondary">@color/color_accent</item>
         <item name="colorPrimary">@color/color_primary</item>
         <item name="colorPrimaryVariant">@color/color_primary_dark</item>
@@ -18,7 +17,7 @@
         <item name="colorOnError">#FFFFFF</item>
         <item name="colorSurface">@color/color_surface</item>
         <item name="colorOnSurface">@color/color_on_surface</item>
-
+        <item name="searchViewStyle">@style/ArticleToolbar</item>
         <item name="snackbarStyle">@style/CustomSnackbar</item>
     </style>
 
@@ -27,6 +26,8 @@
         <item name="colorOnPrimary">@color/color_on_article_bar</item>
         <item name="colorSurface">@color/color_article_bar</item>
         <item name="colorControlNormal">@color/color_on_article_bar</item>
+        <item name="android:textColorHint">@color/color_gray</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>
     </style>
 
     <style name="ArticleToolbar" parent="Widget.MaterialComponents.Toolbar.Primary">

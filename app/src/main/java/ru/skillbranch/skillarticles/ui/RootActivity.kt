@@ -1,9 +1,12 @@
  package ru.skillbranch.skillarticles.ui
 
 import android.os.Bundle
+import android.view.Menu
 import android.widget.ImageView
+import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
@@ -16,8 +19,50 @@ import ru.skillbranch.skillarticles.viewmodels.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.Notify
 import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 
+
  class RootActivity : AppCompatActivity() {
      private lateinit var viewModel: ArticleViewModel
+
+     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+         menuInflater.inflate(R.menu.menu_search, menu)
+         val menuItem = menu?.findItem(R.id.action_search)
+
+         menuItem?.setOnMenuItemClickListener {
+             it.expandActionView()
+             viewModel.handleIsSearch(true)
+             (menuItem.actionView as SearchView).onActionViewExpanded()
+             false
+         }
+
+         with(menu?.findItem(R.id.action_search)?.actionView as SearchView) {
+             setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+                 override fun onQueryTextSubmit(query: String?): Boolean {
+                     viewModel.handleSearchQuery(query)
+                     return false
+                 }
+
+                 override fun onQueryTextChange(newText: String?): Boolean {
+                     if(!newText.isNullOrBlank()) {
+                         viewModel.handleSearchQuery(newText)
+                     }
+                     return false
+                 }
+             })
+
+             setOnQueryTextFocusChangeListener { v, hasFocus ->
+                 if(!hasFocus) {
+                     viewModel.handleIsSearch(false)
+                 }
+             }
+
+             if(viewModel.getCurrentState()!!.isSearch) {
+                 menuItem?.expandActionView()
+                 onActionViewExpanded()
+                 setQuery(viewModel.getCurrentState()?.searchQuery, true)
+             }
+         }
+         return super.onCreateOptionsMenu(menu)
+     }
 
      override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +75,6 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
         viewModel = ViewModelProviders.of(this, vmFactory).get(ArticleViewModel::class.java)
          viewModel.observeState(this) {
              renderUI(it)
-//             setUpToolbar()
          }
 
          viewModel.observeNotifications(this) {
@@ -43,7 +87,7 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
          supportActionBar?.setDisplayHomeAsUpEnabled(true)
          val logo = if(toolbar.childCount > 2) toolbar.getChildAt(2) as ImageView else null
          logo?.scaleType = ImageView.ScaleType.CENTER_CROP
-         (logo?.layoutParams as androidx.appcompat.widget.Toolbar.LayoutParams).let {
+         (logo?.layoutParams as Toolbar.LayoutParams).let {
              it.width = dpToIntPx(40)
              it.height = dpToIntPx(40)
              it.marginEnd = dpToIntPx(16)
@@ -74,7 +118,7 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 
          toolbar.title = data.title ?: "Skill Articles"
          toolbar.subtitle = data.category ?: "loading..."
-         if(data.categoryIcon != null) toolbar.logo = getDrawable(data.categoryIcon as Int)
+         if(data.categoryIcon != null) toolbar.logo = this.resources.getDrawable(data.categoryIcon as Int)
      }
 
      private fun renderNotifications(notify: Notify) {
@@ -83,16 +127,16 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
          when(notify) {
              is Notify.TextMessage -> {}
              is Notify.ActionMessage -> {
-                 snackbar.setActionTextColor(getColor(R.color.color_accent_dark))
+                 snackbar.setActionTextColor(this.resources.getColor(R.color.color_accent_dark))
                  snackbar.setAction(notify.actionLabel) {
                      notify.actionHandler?.invoke()
                  }
              }
              is Notify.ErrorMessage -> {
                  with(snackbar) {
-                     setBackgroundTint(getColor(R.color.design_default_color_error))
+                     setBackgroundTint(resources.getColor(R.color.design_default_color_error))
                      setTextColor(getColor(android.R.color.white))
-                     setActionTextColor(getColor(android.R.color.white))
+                     setActionTextColor(resources.getColor(android.R.color.white))
                      setAction(notify.errLabel) {
                          notify.errHandler?.invoke()
                      }

@@ -2,7 +2,6 @@ package ru.skillbranch.skillarticles.viewmodels
 
 import androidx.annotation.UiThread
 import androidx.lifecycle.*
-import java.lang.IllegalArgumentException
 
 abstract class BaseViewModel<T>(initState: T) : ViewModel() {
     val notifications = MutableLiveData<Event<Notify>>()

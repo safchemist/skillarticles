@@ -128,6 +128,10 @@ class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleStat
         updateState { it.copy(searchQuery = query) }
     }
 
+    fun getCurrentState() : ArticleState? {
+        return currentState
+    }
+
     fun handleIsSearch(isSearch: Boolean) {
         updateState { it.copy(isSearch = isSearch) }
     }
@@ -135,7 +139,6 @@ class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleStat
 }
 
 data class ArticleState(
-
     val isAuth: Boolean = false,
     val isLoadingContent: Boolean = true,
     val isLoadingReviews: Boolean = true,
