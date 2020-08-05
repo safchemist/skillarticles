@@ -1,4 +1,4 @@
-package ru.skillbranch.skillarticles.ui.custom.behaviours
+package ru.skillbranch.skillarticles.ui.custom.behaviors
 
 import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
