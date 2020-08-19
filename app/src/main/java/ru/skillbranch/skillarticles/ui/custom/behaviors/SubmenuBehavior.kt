@@ -21,7 +21,7 @@ class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
         child: ArticleSubmenu,
         dependency: View
     ): Boolean {
-        return if(dependency is Bottombar && dependency.translationY >= 0) {
+        return if (child.isOpen && dependency is Bottombar && dependency.translationY >= 0) {
             animate(child, dependency)
             true
         } else false
@@ -29,6 +29,6 @@ class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
 
     private fun animate(child: ArticleSubmenu, dependency: Bottombar) {
         val fraction = dependency.translationY/dependency.minHeight
-        child.translationX = (child.width + child.marginRight) * fraction
+        child.translationX = (child.width + child.marginRight)*fraction
     }
 }

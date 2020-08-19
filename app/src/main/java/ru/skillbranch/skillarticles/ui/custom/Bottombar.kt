@@ -23,6 +23,10 @@ class Bottombar @JvmOverloads constructor(
 ) : ConstraintLayout(context, attrs, defStyleAttr), CoordinatorLayout.AttachedBehavior {
     var isSearchMode = false
 
+    override fun getBehavior(): CoordinatorLayout.Behavior<Bottombar> {
+        return BottombarBehavior()
+    }
+
     init {
         View.inflate(context, R.layout.layout_bottombar, this)
         val materialBg = MaterialShapeDrawable.createWithElevationOverlay(context)
@@ -30,30 +34,27 @@ class Bottombar @JvmOverloads constructor(
         background = materialBg
     }
 
-    override fun getBehavior(): CoordinatorLayout.Behavior<*> {
-        return BottombarBehavior()
-    }
-
+    //save state
     override fun onSaveInstanceState(): Parcelable? {
         val savedState = SavedState(super.onSaveInstanceState())
         savedState.ssIsSearchMode = isSearchMode
         return savedState
     }
 
-    override fun onRestoreInstanceState(state: Parcelable?) {
+    //restore state
+    override fun onRestoreInstanceState(state: Parcelable) {
         super.onRestoreInstanceState(state)
-        if(state is SavedState) {
+        if (state is SavedState) {
             isSearchMode = state.ssIsSearchMode
             reveal.isVisible = isSearchMode
             group_bottom.isVisible = !isSearchMode
-
         }
     }
 
     fun setSearchState(search: Boolean) {
-        if(isSearchMode == search || !isAttachedToWindow) return
+        if (isSearchMode == search || !isAttachedToWindow) return
         isSearchMode = search
-        if(isSearchMode) animateShowSearchPanel()
+        if (isSearchMode) animateShowSearchPanel()
         else animateHideSearchPanel()
     }
 
@@ -64,10 +65,10 @@ class Bottombar @JvmOverloads constructor(
             reveal,
             width,
             height / 2,
-            0f,
-            endRadius
+            endRadius,
+            0f
         )
-        va.doOnEnd { group_bottom.isVisible = false }
+        va.doOnEnd { reveal.isVisible = false }
         va.start()
     }
 
@@ -81,7 +82,7 @@ class Bottombar @JvmOverloads constructor(
             0f,
             endRadius
         )
-        va.doOnEnd { group_bottom.isVisible = true }
+        va.doOnEnd { group_bottom.isVisible = false }
         va.start()
     }
 
@@ -90,15 +91,16 @@ class Bottombar @JvmOverloads constructor(
             tv_search_result.text = "Not found"
             btn_result_up.isEnabled = false
             btn_result_down.isEnabled = false
-        } else {
+        }else{
             tv_search_result.text = "${position.inc()} of $searchCount"
             btn_result_up.isEnabled = true
             btn_result_down.isEnabled = true
         }
 
-        when(position) {
+        //lock button presses in min/max positions
+        when(position){
             0 -> btn_result_up.isEnabled = false
-            searchCount - 1 -> btn_result_down.isEnabled = false
+            searchCount -1 -> btn_result_down.isEnabled = false
         }
     }
 
@@ -107,20 +109,19 @@ class Bottombar @JvmOverloads constructor(
 
         constructor(superState: Parcelable?) : super(superState)
 
-        constructor(src: Parcel?) : super(src) {
-            ssIsSearchMode = src?.readInt() == 1
+        constructor(src: Parcel) : super(src) {
+            ssIsSearchMode = src.readInt() == 1
         }
 
-        override fun writeToParcel(out: Parcel?, flags: Int) {
-            super.writeToParcel(out, flags)
-            out?.writeInt(if (ssIsSearchMode) 1 else 0)
+        override fun writeToParcel(dst: Parcel, flags: Int) {
+            super.writeToParcel(dst, flags)
+            dst.writeInt(if (ssIsSearchMode) 1 else 0)
         }
 
-        override fun describeContents(): Int = 0
+        override fun describeContents() = 0
 
-        companion object CREATOR: Parcelable.Creator<SavedState> {
-            override fun createFromParcel(source: Parcel?) = SavedState(source)
-
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(parcel: Parcel) = SavedState(parcel)
             override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
         }
     }

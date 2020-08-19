@@ -20,14 +20,14 @@ class ArticleSubmenu @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : ConstraintLayout(context, attrs, defStyleAttr), CoordinatorLayout.AttachedBehavior {
-    var isOpen = false
-    private var centerX: Float = context.dpToPx(200)
-    private var centerY: Float = context.dpToPx(96)
-
+) : ConstraintLayout(context, attrs, defStyleAttr),CoordinatorLayout.AttachedBehavior {
     override fun getBehavior(): CoordinatorLayout.Behavior<*> {
         return SubmenuBehavior()
     }
+
+    var isOpen = false
+    private var centerX: Float = context.dpToPx(200)
+    private var centerY: Float = context.dpToPx(96)
 
     init {
         View.inflate(context, R.layout.layout_submenu, this)
