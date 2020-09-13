@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.text.Selection
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.method.ScrollingMovementMethod
+import android.text.method.LinkMovementMethod
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
@@ -24,6 +24,7 @@ import kotlinx.android.synthetic.main.search_view_layout.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
 import ru.skillbranch.skillarticles.extensions.setMarginOptionally
+import ru.skillbranch.skillarticles.markdown.MarkdownBuilder
 import ru.skillbranch.skillarticles.ui.base.BaseActivity
 import ru.skillbranch.skillarticles.ui.base.Binding
 import ru.skillbranch.skillarticles.ui.custom.SearchFocusSpan
@@ -36,6 +37,7 @@ import ru.skillbranch.skillarticles.viewmodels.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.Notify
 import ru.skillbranch.skillarticles.viewmodels.base.ViewModelFactory
+
 
 class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
 
@@ -50,6 +52,7 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val bgColor by AttrValue(R.attr.colorSecondary)
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val fgColor by AttrValue(R.attr.colorOnSecondary)
 
@@ -62,19 +65,16 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
     override fun renderSearchResult(searchResult: List<Pair<Int, Int>>) {
         val content = tv_text_content.text as Spannable
         tv_text_content.isVisible
-        //clear entry search result
+        // clear entry search result
         clearSearchResult()
 
-        searchResult.forEach {(start, end) ->
+        searchResult.forEach { (start, end) ->
             content.setSpan(
-                SearchSpan(bgColor, fgColor),
-                start,
-                end,
-                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+                SearchSpan(bgColor, fgColor), start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
             )
         }
 
-        //scroll to first search element
+        // scroll to first searched element
         renderSearchPosition(0)
     }
 
@@ -82,8 +82,8 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
         val content = tv_text_content.text as Spannable
 
         val spans = content.getSpans<SearchSpan>()
-        //clear last search position
-        content.getSpans<SearchFocusSpan>().forEach { content.removeSpan(it) }
+        // clear last search position
+        content.getSpans<SearchFocusSpan>().forEach { content.removeSpan((it)) }
         if (spans.isNotEmpty()) {
             //find position span
             val result = spans[searchPosition]
@@ -99,7 +99,8 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
 
     override fun clearSearchResult() {
         val content = tv_text_content.text as Spannable
-        content.getSpans<SearchSpan>()
+        content
+            .getSpans<SearchSpan>()
             .forEach { content.removeSpan(it) }
     }
 
@@ -119,15 +120,16 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
         val searchView = (menuItem?.actionView as? SearchView)
         searchView?.queryHint = getString(R.string.article_search_placeholder)
 
-        //restore SearchView
-        if (binding.isSearch){
-            menuItem?.expandActionView()
+        // restore SearchView
+        if (binding.isSearch) {
+            menuItem?.expandActionView()  // для того чтобы наша вьха расширилась на всю ширину тулбара
             searchView?.setQuery(binding.searchQuery, false)
 
             if (binding.isFocusedSearch) searchView?.requestFocus()
             else searchView?.clearFocus()
         }
 
+        // открытый-закрытый SearchView
         menuItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
             override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
                 viewModel.handleSearchMode(true)
@@ -140,16 +142,19 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
             }
         })
 
-        searchView?.setOnQueryTextListener( object : SearchView.OnQueryTextListener{
-            override fun onQueryTextChange(newText: String?): Boolean {
-                viewModel.handleSearch(newText)
-                return true
-            }
+        // обработка ввода в поисковую строку
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 viewModel.handleSearch(query)
                 return true
             }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.handleSearch(newText)
+                return true
+            }
         })
+
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -157,14 +162,15 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
         val snackbar = Snackbar.make(coordinator_container, notify.message, Snackbar.LENGTH_LONG)
             .setAnchorView(bottombar)
 
-        when(notify) {
+        when (notify) {
             is Notify.ActionMessage -> {
                 val (_, label, handler) = notify
-                with(snackbar){
+                with(snackbar) {
                     setActionTextColor(getColor(R.color.color_accent_dark))
-                    setAction(label){ handler?.invoke() }
+                    setAction(label) { handler.invoke() }
                 }
             }
+
             is Notify.ErrorMessage -> {
                 val (_, label, handler) = notify
                 with(snackbar) {
@@ -172,7 +178,7 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
                     setTextColor(getColor(android.R.color.white))
                     setActionTextColor(getColor(android.R.color.white))
                     handler ?: return@with
-                    setAction(label){handler.invoke()}
+                    setAction(label) { handler.invoke() }
                 }
             }
         }
@@ -180,24 +186,26 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
     }
 
     private fun setupSubmenu() {
-        btn_text_up.setOnClickListener{viewModel.handleUpText()}
-        btn_text_down.setOnClickListener{viewModel.handleDownText()}
-        switch_mode.setOnClickListener { viewModel.handleNightMode()}
+        btn_text_up.setOnClickListener { viewModel.handleUpText() }
+        btn_text_down.setOnClickListener { viewModel.handleDownText() }
+        switch_mode.setOnClickListener { viewModel.handleNightMode() }
     }
 
     private fun setupBottombar() {
-        btn_like.setOnClickListener { viewModel.handleLike()}
-        btn_bookmark.setOnClickListener { viewModel.handleBookmark()}
-        btn_share.setOnClickListener { viewModel.handleShare()}
-        btn_settings.setOnClickListener { viewModel.handleToggleMenu()}
+        btn_like.setOnClickListener { viewModel.handleLike() }
+        btn_bookmark.setOnClickListener { viewModel.handleBookmark() }
+        btn_share.setOnClickListener { viewModel.handleShare() }
+        btn_settings.setOnClickListener { viewModel.handleToggleMenu() }
 
         btn_result_up.setOnClickListener {
-            if (search_view.hasFocus()) search_view.clearFocus()
+            if (search_view.hasFocus()) search_view.clearFocus() // очистка фокуса для скрытия клавиатуры
+            if (tv_text_content.hasFocus()) tv_text_content.requestFocus() // возврат фокуса при перемещениях по элементам поиска
             viewModel.handleUpResult()
         }
 
         btn_result_down.setOnClickListener {
             if (search_view.hasFocus()) search_view.clearFocus()
+            if (tv_text_content.hasFocus()) tv_text_content.requestFocus() // возврат фокуса при перемещениях по элементам поиска
             viewModel.handleDownResult()
         }
 
@@ -210,36 +218,36 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
     private fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        // проверяем что тулбаер есть и в нём есть лого и настраиваем его
         val logo = if (toolbar.childCount > 2) toolbar.getChildAt(2) as ImageView else null
         logo?.scaleType = ImageView.ScaleType.CENTER_CROP
-        //check toolbar imports
         (logo?.layoutParams as? Toolbar.LayoutParams)?.let {
             it.width = this.dpToIntPx(40)
             it.height = this.dpToIntPx(40)
-            it.marginEnd = this.dpToIntPx(16)
+            it.marginEnd = this.dpToIntPx(16) // Отступ от вью до тайтла
             logo.layoutParams = it
         }
     }
 
-    inner class ArticleBinding : Binding() {
-        var  isFocusedSearch:Boolean = false
+
+    inner class ArticleBinding() : Binding() {
+        var isFocusedSearch: Boolean = false
         var searchQuery: String? = null
 
         private var isLoadingContent by ObserveProp(true)
 
-        private var isLike: Boolean by RenderProp(false) { btn_like.isChecked = it}
-        private var isBookmark: Boolean by RenderProp(false) { btn_bookmark.isChecked = it}
+        // если эти проперти будут изменены, они автоматически будут перерисованы на нашем UI
+        private var isLike: Boolean by RenderProp(false) { btn_like.isChecked = it }
+        private var isBookmark: Boolean by RenderProp(false) { btn_bookmark.isChecked = it }
         private var isShowMenu: Boolean by RenderProp(false) {
             btn_settings.isChecked = it
             if (it) submenu.open() else submenu.close()
         }
-
-        private var title: String by RenderProp("loading") {toolbar.title = it}
-        private var caegory: String by RenderProp("loading") {toolbar.subtitle = it}
-        private var caegoryIcon: Int by RenderProp(R.drawable.logo_placeholder) {
+        private var title: String by RenderProp("loading") { toolbar.title = it }
+        private var category: String by RenderProp("loading") { toolbar.subtitle = it }
+        private var categoryIcon: Int by RenderProp(R.drawable.logo_placeholder) {
             toolbar.logo = getDrawable(it)
         }
-
         private var isBigText: Boolean by RenderProp(false) {
             if (it) {
                 tv_text_content.textSize = 18f
@@ -251,23 +259,27 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
                 btn_text_down.isChecked = true
             }
         }
-
-        private var isDarkMode: Boolean by RenderProp(false, false){
+        private var isDarkMode: Boolean by RenderProp(false, false) {
             switch_mode.isChecked = it
-            delegate.localNightMode = if (it) AppCompatDelegate.MODE_NIGHT_YES
-            else AppCompatDelegate.MODE_NIGHT_NO
+            delegate.localNightMode =
+                if (it) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
         }
 
         var isSearch: Boolean by ObserveProp(false) {
             if (it) showSearchBar() else hideSearchBar()
         }
 
-        private var searchResults: List<Pair<Int, Int>> by ObserveProp<List<Pair<Int, Int>>>(emptyList())
+        private var searchResults: List<Pair<Int, Int>> by ObserveProp(emptyList())
         private var searchPosition: Int by ObserveProp(0)
 
-        private var content: String by ObserveProp("loading"){
-            tv_text_content.setText(it, TextView.BufferType.SPANNABLE)
-            tv_text_content.movementMethod = ScrollingMovementMethod()
+        private var content: String by ObserveProp("loading") {
+            MarkdownBuilder(this@RootActivity)
+                .markdownToSpan(it)
+                .run {
+                    tv_text_content.setText(this, TextView.BufferType.SPANNABLE)
+                }
+
+            tv_text_content.movementMethod = LinkMovementMethod.getInstance()
         }
 
         override fun onFinishInflate() {
@@ -276,12 +288,11 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
                 ::isSearch,
                 ::searchResults,
                 ::searchPosition
-            ) {ilc, iss, sr, sp ->
+            ) { ilc, iss, sr, sp ->
                 if (!ilc && iss) {
                     renderSearchResult(sr)
                     renderSearchPosition(sp)
                 }
-
                 if (!ilc && !iss) {
                     clearSearchResult()
                 }
@@ -300,20 +311,19 @@ class RootActivity : BaseActivity<ArticleViewModel>(), IArticleView {
             isDarkMode = data.isDarkMode
 
             if (data.title != null) title = data.title
-            if (data.category != null) caegory = data.category
-            if (data.categoryIcon != null) caegoryIcon = data.categoryIcon as Int
-            if (data.content.isNotEmpty()) content = data.content.first() as String
+            if (data.category != null) category = data.category
+            if (data.categoryIcon != null) categoryIcon = data.categoryIcon as Int
+            if (data.content != null) content = data.content
 
             isLoadingContent = data.isLoadingContent
             isSearch = data.isSearch
             searchQuery = data.searchQuery
             searchPosition = data.searchPosition
             searchResults = data.searchResults
-
         }
 
         override fun saveUi(outState: Bundle) {
-            outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?:false)
+            outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?: false)
         }
 
         override fun restoreUi(savedState: Bundle) {

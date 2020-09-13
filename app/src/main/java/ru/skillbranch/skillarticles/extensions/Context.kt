@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.TypedValue
+import java.lang.IllegalArgumentException
 
 fun Context.dpToPx(dp: Int): Float {
     return TypedValue.applyDimension(
@@ -36,3 +37,9 @@ val Context.isNetworkAvailable: Boolean
             cm.activeNetworkInfo?.run { isConnectedOrConnecting } ?: false
         }
     }
+
+fun Context.attrValue(color: Int): Int {
+    val tv = TypedValue()
+    if(this.theme.resolveAttribute(color, tv, true)) return tv.data
+    else throw IllegalArgumentException("exception")
+}
