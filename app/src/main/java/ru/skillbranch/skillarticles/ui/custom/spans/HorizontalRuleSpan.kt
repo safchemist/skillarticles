@@ -1,4 +1,4 @@
-package ru.skillbranch.skillarticles.markdown.spans
+package ru.skillbranch.skillarticles.ui.custom.spans
 
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -49,7 +49,6 @@ class HorizontalRuleSpan(
     }
 
     private inline fun Paint.forLine(block: () -> Unit) {
-        //                                             2:07:20
         val oldColor = color
         val oldStyle = style
         val oldWidth = strokeWidth

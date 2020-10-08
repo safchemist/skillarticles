@@ -1,50 +1,55 @@
-package ru.skillbranch.skillarticles.markdown.spans
+package ru.skillbranch.skillarticles.ui.custom.spans
 
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.text.Layout
 import android.text.style.LeadingMarginSpan
-import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.Px
-import androidx.annotation.VisibleForTesting
+import ru.skillbranch.skillarticles.extensions.getLineBottomWithoutPadding
 
 
-class OrderedListSpan(
+class UnorderedListSpan(
     @Px
     private val gapWidth: Float,
-    private val order: String,
+    @Px
+    private val bulletRadius: Float,
     @ColorInt
-    private val orderColor: Int
+    private val bulletColor: Int
 ) : LeadingMarginSpan {
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 
     override fun getLeadingMargin(first: Boolean): Int {
-        return (order.length.inc() * gapWidth).toInt()
+        return (4 * bulletRadius + gapWidth).toInt()
     }
 
     override fun drawLeadingMargin(
         canvas: Canvas, paint: Paint, currentMarginLocation: Int, paragraphDirection: Int,
         lineTop: Int, lineBaseline: Int, lineBottom: Int, text: CharSequence?, lineStart: Int,
-        lineEnd: Int, isFirstLine: Boolean, layout: Layout?
+        lineEnd: Int, isFirstLine: Boolean, layout: Layout
     ) {
         if (isFirstLine) {
             paint.withCustomColor {
-                canvas.drawText(
-                    order, currentMarginLocation + gapWidth, lineBaseline.toFloat(), paint
+                canvas.drawCircle(
+                    gapWidth + currentMarginLocation + bulletRadius,
+                    (lineTop + layout.getLineBottomWithoutPadding(layout.getLineForOffset(lineStart))) / 2f,
+                    bulletRadius,
+                    paint
                 )
             }
         }
     }
 
     private inline fun Paint.withCustomColor(block: () -> Unit) {
+        //                                             1:43:30
         val oldColor = color
+        val oldStyle = style
 
-        color = orderColor
+        color = bulletColor
+        style = Paint.Style.FILL
 
         block()
 
         color = oldColor
+        style = oldStyle
     }
 }
