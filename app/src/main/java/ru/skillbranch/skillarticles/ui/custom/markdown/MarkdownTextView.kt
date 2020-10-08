@@ -8,19 +8,18 @@ import android.text.Spannable
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.widget.TextView
-import androidx.annotation.VisibleForTesting
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.graphics.withTranslation
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.attrValue
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
 
 @SuppressLint("ViewConstructor")
-@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 class MarkdownTextView constructor(
     context: Context,
     fontSize: Float,
     mockHelper: SearchBgHelper? = null //for mock
-) : TextView(context, null, 0), IMarkdownView {
+) : AppCompatTextView(context, null, 0), IMarkdownView {
 
     constructor(context: Context, fontSize: Float) : this(context, fontSize, null)
 

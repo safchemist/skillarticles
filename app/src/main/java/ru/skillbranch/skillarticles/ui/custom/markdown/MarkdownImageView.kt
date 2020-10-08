@@ -3,11 +3,14 @@ package ru.skillbranch.skillarticles.ui.custom.markdown
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Parcel
+import android.os.Parcelable
 import android.text.Spannable
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.annotation.Px
 import androidx.annotation.VisibleForTesting
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.ColorUtils
@@ -54,8 +57,11 @@ class MarkdownImageView private constructor(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     var tv_alt: TextView? = null
 
+    @Px
     private val titleTopMargin: Int = context.dpToIntPx(8)
+    @Px
     private val titlePadding: Int = context.dpToIntPx(56)
+    @Px
     private val cornerRadius: Float = context.dpToPx(4)
 
     @ColorInt
@@ -76,6 +82,9 @@ class MarkdownImageView private constructor(
         color = lineColor
         strokeWidth = 0f
     }
+
+    private var isOpen = false
+    private var aspectRatio = 0f
 
     init {
         layoutParams = LayoutParams(
@@ -131,10 +140,15 @@ class MarkdownImageView private constructor(
             iv_image.setOnClickListener {
                 if (tv_alt?.isVisible == true) animateHideAlt()
                 else animateShowAlt()
+                isOpen = !isOpen
             }
         }
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        Glide.with(context).load(imageUrl).transform(AspectRatioResizeTransform()).into(iv_image)
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) { // 1:10
@@ -144,6 +158,12 @@ class MarkdownImageView private constructor(
         //create measureSpec for children EXACTLY
         //all children width == parent width (constraint parent width)
         val ms = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
+
+        if (aspectRatio != 0f) {
+            val hms =
+                MeasureSpec.makeMeasureSpec((width / aspectRatio).toInt(), MeasureSpec.EXACTLY)
+            iv_image.measure(ms, hms)
+        } else iv_image.measure(ms, heightMeasureSpec)
 
         iv_image.measure(ms, heightMeasureSpec)
         tv_title.measure(ms, heightMeasureSpec)
@@ -233,6 +253,48 @@ class MarkdownImageView private constructor(
         )
         va.doOnEnd { tv_alt?.isVisible = false }
         va.start()
+    }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val savedState = SavedState(super.onSaveInstanceState())
+        savedState.ssIsOpen = isOpen
+        savedState.ssAspectRatio = (iv_image.width.toFloat() / iv_image.height)
+        return savedState
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable) {
+        super.onRestoreInstanceState(state)
+        if (state is SavedState) {
+            isOpen = state.ssIsOpen
+            aspectRatio = state.ssAspectRatio
+            tv_alt?.isVisible = isOpen
+        }
+    }
+
+    private class SavedState : BaseSavedState, Parcelable {
+        var ssIsOpen: Boolean = false
+        var ssAspectRatio: Float = 0f
+
+        constructor(superState: Parcelable?) : super(superState)
+
+        constructor(src: Parcel) : super(src) {
+            ssIsOpen = src.readInt() == 1
+            ssAspectRatio = src.readFloat()
+        }
+
+        override fun writeToParcel(out: Parcel, flags: Int) {
+            super.writeToParcel(out, flags)
+            out.writeInt(if (ssIsOpen) 1 else 0)
+            out.writeFloat(ssAspectRatio)
+        }
+
+        override fun describeContents(): Int = 0
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(source: Parcel): SavedState = SavedState(source)
+
+            override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
+        }
     }
 }
 
