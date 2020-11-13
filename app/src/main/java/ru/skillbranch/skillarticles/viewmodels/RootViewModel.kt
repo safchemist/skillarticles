@@ -2,8 +2,10 @@ package ru.skillbranch.skillarticles.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
 import ru.skillbranch.skillarticles.R
+import ru.skillbranch.skillarticles.data.repositories.RootRepository
 import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
+import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 
 class RootViewModel(handle: SavedStateHandle) : BaseViewModel<RootState>(handle, RootState()) {
 
@@ -25,6 +27,7 @@ class RootViewModel(handle: SavedStateHandle) : BaseViewModel<RootState>(handle,
                     super.navigate(command)
                 }
             }
+            else -> super.navigate(command)
         }
     }
 }

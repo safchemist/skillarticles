@@ -1,8 +1,6 @@
 package ru.skillbranch.skillarticles.ui.auth
 
 import android.text.Spannable
-import android.text.style.UnderlineSpan
-import android.util.SparseArray
 import androidx.core.text.set
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
@@ -10,12 +8,14 @@ import kotlinx.android.synthetic.main.fragment_auth.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.attrValue
 import ru.skillbranch.skillarticles.ui.base.BaseFragment
+import ru.skillbranch.skillarticles.ui.custom.spans.UnderlineSpan
+import ru.skillbranch.skillarticles.viewmodels.auth.AuthViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 
 class AuthFragment : BaseFragment<AuthViewModel>() {
     override val viewModel: AuthViewModel by viewModels()
     override val layout: Int = R.layout.fragment_auth
-    private val args: AuthFragment by navArgs()
+    private val args: AuthFragmentArgs by navArgs()
 
     override fun setupViews() {
         tv_privacy.setOnClickListener {

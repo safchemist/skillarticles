@@ -1,47 +1,23 @@
 package ru.skillbranch.skillarticles.ui
 
-import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import android.widget.ImageView
 import androidx.activity.viewModels
-import androidx.annotation.VisibleForTesting
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
 import kotlinx.android.synthetic.main.layout_bottombar.*
-import kotlinx.android.synthetic.main.layout_submenu.*
-import kotlinx.android.synthetic.main.search_view_layout.*
 import ru.skillbranch.skillarticles.R
-import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
-import ru.skillbranch.skillarticles.extensions.dpToIntPx
-import ru.skillbranch.skillarticles.extensions.hideKeyboard
-import ru.skillbranch.skillarticles.extensions.setMarginOptionally
+import ru.skillbranch.skillarticles.extensions.selectDestination
 import ru.skillbranch.skillarticles.ui.base.BaseActivity
-import ru.skillbranch.skillarticles.ui.base.Binding
-import ru.skillbranch.skillarticles.ui.delegates.ObserveProp
-import ru.skillbranch.skillarticles.ui.delegates.RenderProp
 import ru.skillbranch.skillarticles.viewmodels.RootViewModel
-import ru.skillbranch.skillarticles.viewmodels.articles.ArticleState
-import ru.skillbranch.skillarticles.viewmodels.articles.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 import ru.skillbranch.skillarticles.viewmodels.base.Notify
-import ru.skillbranch.skillarticles.viewmodels.base.ViewModelFactory
 
 class RootActivity : BaseActivity<RootViewModel>() {
     override val layout: Int = R.layout.activity_root
-    override val viewModel: RootViewModel by viewModels()
+    public override val viewModel: RootViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
