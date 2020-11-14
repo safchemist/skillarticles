@@ -29,7 +29,6 @@ object LocalDataHolder {
             )
         }
         return articleData
-
     }
 
     fun findArticlePersonalInfo(articleId: String): LiveData<ArticlePersonalInfo?> {

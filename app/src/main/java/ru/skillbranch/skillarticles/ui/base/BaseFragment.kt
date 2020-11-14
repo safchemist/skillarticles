@@ -86,5 +86,4 @@ abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment()
         } else menu.clear()
         super.onPrepareOptionsMenu(menu)
     }
-
 }
