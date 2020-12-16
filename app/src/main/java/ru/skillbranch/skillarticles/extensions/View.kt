@@ -2,10 +2,10 @@ package ru.skillbranch.skillarticles.extensions
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.IdRes
 import androidx.core.view.*
 import androidx.navigation.NavDestination
 import com.google.android.material.bottomnavigation.BottomNavigationView
-
 
 fun View.setMarginOptionally(
     left: Int = marginLeft,
@@ -50,4 +50,12 @@ fun BottomNavigationView.selectItem(itemId: Int?){
             break
         }
     }
+}
+
+fun matchDestination(destination: NavDestination, @IdRes destId: Int) : Boolean{
+    var currentDestination: NavDestination? = destination
+    while (currentDestination!!.id != destId && currentDestination.parent != null) {
+        currentDestination = currentDestination.parent
+    }
+    return currentDestination.id == destId
 }
