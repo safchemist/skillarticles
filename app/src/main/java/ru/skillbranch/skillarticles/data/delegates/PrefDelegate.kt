@@ -35,7 +35,9 @@ class PrefDelegate <T> (private val defaultValue: T) {
                         is Boolean -> putBoolean(key, value)
                         else -> error("Only primitive types can be stored into Preferences")
                     }
+                    apply()
                 }
+                storedValue = value
             }
         }
     }

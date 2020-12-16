@@ -4,14 +4,17 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.WindowManager
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -25,10 +28,7 @@ import kotlinx.android.synthetic.main.layout_submenu.view.*
 import kotlinx.android.synthetic.main.search_view_layout.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
-import ru.skillbranch.skillarticles.extensions.dpToIntPx
-import ru.skillbranch.skillarticles.extensions.format
-import ru.skillbranch.skillarticles.extensions.hideKeyboard
-import ru.skillbranch.skillarticles.extensions.setMarginOptionally
+import ru.skillbranch.skillarticles.extensions.*
 import ru.skillbranch.skillarticles.ui.base.*
 import ru.skillbranch.skillarticles.ui.delegates.RenderProp
 import ru.skillbranch.skillarticles.viewmodels.article.ArticleState
@@ -36,8 +36,7 @@ import ru.skillbranch.skillarticles.viewmodels.article.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.ViewModelFactory
 
-class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
-
+class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
     private val args: ArticleFragmentArgs by navArgs()
     override val viewModel: ArticleViewModel by viewModels {
         ViewModelFactory(
@@ -46,10 +45,20 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
         )
     }
 
+    private val commentsAdapter by lazy {
+        CommentsAdapter {
+            viewModel.handleReplyTo(it.slug, it.user.name)
+            et_comment.requestFocus()
+            scroll.smoothScrollTo(0, wrap_comments.top)
+            et_comment.context.showKeyboard(et_comment)
+        }
+    }
+
     override val layout: Int = R.layout.fragment_article
+
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     override val binding: ArticleBinding by lazy { ArticleBinding() }
-    override val prepareToolbar: (ToolbarBuilder.() -> Unit)? = {
+    override val prepareToolbar: (ToolbarBuilder.() -> Unit) = {
         this.setTitle(args.title)
             .setSubtitle(args.category)
             .setLogo(args.categoryIcon)
@@ -64,7 +73,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
             )
     }
 
-    override val prepareBottombar: (BottombarBuilder.() -> Unit)? = {
+    override val prepareBottombar: (BottombarBuilder.() -> Unit) = {
         this.addView(R.layout.layout_submenu)
             .addView(R.layout.layout_bottombar)
             .setVisibility(false)
@@ -80,113 +89,9 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
         setHasOptionsMenu(true)
     }
 
-    inner class ArticleBinding : Binding() {
-
-        var isFocusedSearch:Boolean = false
-        var searchQueryText = ""
-
-        private var isLoadingContent by RenderProp(true)
-
-        private var isLike: Boolean by RenderProp(false){ bottombar.btn_like.isChecked = it }
-        private var isBookMark: Boolean by RenderProp(false){ bottombar.btn_bookmark.isChecked = it }
-        private var isShowMenu: Boolean by RenderProp(false){
-            bottombar.btn_settings.isChecked = it
-            if (it) submenu.open() else submenu.close()
-        }
-
-        private var isBigText: Boolean by RenderProp(false) {
-            if (it) {
-                tv_text_content.textSize = 18f
-                submenu.btn_text_up.isChecked = true
-                submenu.btn_text_down.isChecked = false
-            } else {
-                tv_text_content.textSize = 14f
-                submenu.btn_text_up.isChecked = false
-                submenu.btn_text_down.isChecked = true
-            }
-        }
-
-        private var isDarkMode: Boolean by RenderProp(false, false) {
-            submenu.switch_mode.isChecked = it
-            root.delegate.localNightMode = if (it) AppCompatDelegate.MODE_NIGHT_YES
-            else AppCompatDelegate.MODE_NIGHT_NO
-        }
-
-        var isSearch: Boolean by RenderProp(false) {
-
-            if (it) {
-                showSearchBar()
-                with(toolbar) {
-                    (layoutParams as AppBarLayout.LayoutParams).scrollFlags =
-                        AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
-                }
-            } else {
-                hideSearchBar()
-                with(toolbar) {
-                    (layoutParams as AppBarLayout.LayoutParams).scrollFlags =
-                        AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
-                }
-            }
-        }
-
-        private var searchResults: List<Pair<Int, Int>> by RenderProp(emptyList())
-        private var searchPosition: Int by RenderProp(0)
-
-        private var content: List<MarkdownElement> by RenderProp(emptyList()) {
-            tv_text_content.isLoading = it.isEmpty()
-            tv_text_content.setContent(it)
-            if (it.isNotEmpty()) setupCopyListener()
-        }
-
-        override val afterInflated: (() -> Unit)? =  {
-            dependsOn<Boolean, Boolean, List<Pair<Int, Int>>, Int>(
-                ::isLoadingContent,
-                ::isSearch,
-                ::searchResults,
-                ::searchPosition
-            ){ ilc, iss, sr, sp ->
-                if (!ilc && iss) {
-                    tv_text_content.renderSearchResult(sr)
-                    tv_text_content.renderSearchPosition(sr.getOrNull(sp))
-                }
-                if (!ilc &&!iss) {
-                    tv_text_content.clearSearchResult()
-                }
-
-                bottombar.bindSearchInfo(sr.size, sp)
-            }
-        }
-
-        override fun bind(data: IViewModelState) {
-            data as ArticleState
-            isLike = data.isLike
-            isBookMark = data.isBookmark
-            isShowMenu = data.isShowMenu
-            isBigText = data.isBigText
-            isDarkMode = data.isDarkMode
-            content = data.content
-
-            isLoadingContent = data.isLoadingContent
-            isSearch = data.isSearch
-            searchQueryText = data.searchQuery ?: ""
-            searchPosition = data.searchPosition
-            searchResults = data.searchResults
-
-        }
-
-        override fun saveUi(outState: Bundle){
-            outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?: false)
-        }
-
-        override fun restoreUi(savedState: Bundle?) {
-            isFocusedSearch = savedState?.getBoolean(::isFocusedSearch.name) ?: false
-        }
-    }
-
     override fun setupViews() {
         // override window resize options
         root.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-
 
         setupBottombar()
         setupSubmenu()
@@ -203,7 +108,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
 
         Glide.with(root)
             .load(args.poster)
-            .transform(CenterCrop(),RoundedCorners(cornerRadius))
+            .transform(CenterCrop(), RoundedCorners(cornerRadius))
             .into(iv_poster)
 
         tv_title.text = args.title
@@ -211,9 +116,30 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
         tv_date.text = args.date.format()
         et_comment.setOnEditorActionListener { view, _, _ ->
             root.hideKeyboard(view)
-            viewModel.handleSendComment()
+            viewModel.setComment(view.text.toString())
+            viewModel.handleSendComment(view.text.toString())
+            view.text = null
+            view.clearFocus()
             true
         }
+
+        et_comment.setOnFocusChangeListener { _, hasFocus ->
+            viewModel.handleCommentFocus(hasFocus)
+        }
+
+        wrap_comments.setEndIconOnClickListener { view ->
+            view.context.hideKeyboard(view)
+            viewModel.handleClearComment()
+            et_comment.text = null
+            et_comment.clearFocus()
+        }
+
+        with(rv_comments) {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = commentsAdapter
+        }
+
+        viewModel.observeList(viewLifecycleOwner) { commentsAdapter.submitList(it) }
     }
 
     override fun onDestroyView() {
@@ -265,8 +191,8 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
     }
 
     private fun setupSubmenu() {
-        submenu.btn_text_up.setOnClickListener{ viewModel.handleUpText() }
-        submenu.btn_text_down.setOnClickListener{ viewModel.handleDownText() }
+        submenu.btn_text_up.setOnClickListener { viewModel.handleUpText() }
+        submenu.btn_text_down.setOnClickListener { viewModel.handleDownText() }
         submenu.switch_mode.setOnClickListener { viewModel.handleNightMode() }
     }
 
@@ -278,7 +204,6 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-
         super.onPrepareOptionsMenu(menu)
         val menuItem = menu.findItem(R.id.action_search)
         val searchView = (menuItem.actionView as SearchView)
@@ -292,7 +217,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
             else searchView.clearFocus()
         }
 
-        menuItem?.setOnActionExpandListener(object: MenuItem.OnActionExpandListener {
+        menuItem?.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
             override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
                 viewModel.handleSearchMode(true)
                 return true
@@ -304,7 +229,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
             }
         })
 
-        searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 viewModel.handleSearch(query)
                 return true
@@ -316,5 +241,129 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
                 return true
             }
         })
+    }
+
+    inner class ArticleBinding : Binding() {
+
+        var isFocusedSearch: Boolean = false
+        var searchQueryText = ""
+
+        private var isLoadingContent by RenderProp(false) {
+            tv_text_content.isLoading = true
+            if (it) setupCopyListener()
+        }
+
+        private var isLike: Boolean by RenderProp(false) { bottombar.btn_like.isChecked = it }
+        private var isBookMark: Boolean by RenderProp(false) {
+            bottombar.btn_bookmark.isChecked = it
+        }
+        private var isShowMenu: Boolean by RenderProp(false) {
+            bottombar.btn_settings.isChecked = it
+            if (it) submenu.open() else submenu.close()
+        }
+
+        private var isBigText: Boolean by RenderProp(false) {
+            if (it) {
+                tv_text_content.textSize = 18f
+                submenu.btn_text_up.isChecked = true
+                submenu.btn_text_down.isChecked = false
+            } else {
+                tv_text_content.textSize = 14f
+                submenu.btn_text_up.isChecked = false
+                submenu.btn_text_down.isChecked = true
+            }
+        }
+
+        private var isDarkMode: Boolean by RenderProp(false, false) {
+            submenu.switch_mode.isChecked = it
+            root.delegate.localNightMode = if (it) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        }
+
+        var isSearch: Boolean by RenderProp(false) {
+            if (it) {
+                showSearchBar()
+                with(toolbar) {
+                    (layoutParams as AppBarLayout.LayoutParams).scrollFlags =
+                        AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
+                }
+            } else {
+                hideSearchBar()
+                with(toolbar) {
+                    (layoutParams as AppBarLayout.LayoutParams).scrollFlags =
+                        AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                }
+            }
+        }
+
+        private var searchResults: List<Pair<Int, Int>> by RenderProp(emptyList())
+        private var searchPosition: Int by RenderProp(0)
+
+        private var content: List<MarkdownElement> by RenderProp(emptyList()) {
+            tv_text_content.setContent(it)
+        }
+
+        private var answerTo by RenderProp("Comment") { wrap_comments.hint = it }
+        private var comment by RenderProp("") {
+            et_comment.setText(it)
+
+            if (it.isBlank() && et_comment.hasFocus()) {
+                et_comment.clearFocus()
+            }
+        }
+
+        private var isShowBottombar by RenderProp(true) {
+            if (it) bottombar.show() else bottombar.hide()
+            if (submenu.isOpen) submenu.isVisible = it
+        }
+
+        override val afterInflated: (() -> Unit) = {
+            dependsOn<Boolean, Boolean, List<Pair<Int, Int>>, Int>(
+                ::isLoadingContent,
+                ::isSearch,
+                ::searchResults,
+                ::searchPosition
+            ) { ilc, iss, sr, sp ->
+                if (!ilc && iss) {
+                    tv_text_content.renderSearchResult(sr)
+                    tv_text_content.renderSearchPosition(sr.getOrNull(sp))
+                }
+                if (!ilc && !iss) {
+                    tv_text_content.clearSearchResult()
+                }
+
+                bottombar.bindSearchInfo(sr.size, sp)
+            }
+        }
+
+        override fun bind(data: IViewModelState) {
+            data as ArticleState
+
+            Log.i("comment", "bind function")
+            Log.i("comment", data.commentText ?: "empty")
+
+            isLike = data.isLike
+            isBookMark = data.isBookmark
+            isShowMenu = data.isShowMenu
+            isBigText = data.isBigText
+            isDarkMode = data.isDarkMode
+            content = data.content
+            isLoadingContent = data.isLoadingContent
+            isSearch = data.isSearch
+            comment = data.commentText ?: ""
+            searchQueryText = data.searchQuery ?: ""
+            searchPosition = data.searchPosition
+            searchResults = data.searchResults
+            answerTo = data.answerTo ?: "Comment"
+            isShowBottombar = data.showBottombar
+        }
+
+        override fun saveUi(outState: Bundle) {
+            outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?: false)
+        }
+
+        override fun restoreUi(savedState: Bundle?) {
+            isFocusedSearch = savedState?.getBoolean(::isFocusedSearch.name) ?: false
+        }
     }
 }
