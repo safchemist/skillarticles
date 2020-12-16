@@ -267,8 +267,7 @@ class ArticleItemView constructor(
         )
     }
 
-    @SuppressLint("SetTextI18n")
-    fun bind(item: ArticleItemData, toggleBookmarkListener: ((ArticleItemData, Boolean) -> Unit)) {
+    fun bind(item: ArticleItemData, toggleBookmarkListener: ((String, Boolean) -> Unit)? = null) {
 
         tv_date.text = item.date.shortFormat()
         tv_author.text = item.author
