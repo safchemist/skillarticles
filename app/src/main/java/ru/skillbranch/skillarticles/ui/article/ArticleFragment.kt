@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.WindowManager
@@ -116,7 +115,6 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
         tv_date.text = args.date.format()
         et_comment.setOnEditorActionListener { view, _, _ ->
             root.hideKeyboard(view)
-            viewModel.setComment(view.text.toString())
             viewModel.handleSendComment(view.text.toString())
             view.text = null
             view.clearFocus()
@@ -337,10 +335,6 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
 
         override fun bind(data: IViewModelState) {
             data as ArticleState
-
-            Log.i("comment", "bind function")
-            Log.i("comment", data.commentText ?: "empty")
-
             isLike = data.isLike
             isBookMark = data.isBookmark
             isShowMenu = data.isShowMenu

@@ -1,6 +1,9 @@
 package ru.skillbranch.skillarticles.ui.custom.spans
 
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.DashPathEffect
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.drawable.Drawable
 import android.text.style.ReplacementSpan
 import androidx.annotation.ColorInt

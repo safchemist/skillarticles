@@ -1,6 +1,5 @@
 package ru.skillbranch.skillarticles.ui.custom
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -12,7 +11,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ru.skillbranch.skillarticles.R
-import ru.skillbranch.skillarticles.data.models.ArticleItemData
+import ru.skillbranch.skillarticles.data.local.entities.ArticleItem
 import ru.skillbranch.skillarticles.extensions.attrValue
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
 import ru.skillbranch.skillarticles.extensions.shortFormat
@@ -267,7 +266,7 @@ class ArticleItemView constructor(
         )
     }
 
-    fun bind(item: ArticleItemData, toggleBookmarkListener: ((String, Boolean) -> Unit)? = null) {
+    fun bind(item: ArticleItem, listener: ((ArticleItem, Boolean) -> Unit)? = null) {
 
         tv_date.text = item.date.shortFormat()
         tv_author.text = item.author
@@ -290,7 +289,7 @@ class ArticleItemView constructor(
         tv_comments_count.text = "${item.commentCount}"
         tv_read_duration.text = "${item.readDuration} min read"
         iv_bookmark.isChecked = item.isBookmark
-        iv_bookmark.setOnClickListener { toggleBookmarkListener.invoke(item, true) }
-        this.setOnClickListener { toggleBookmarkListener.invoke(item, false) }
+        iv_bookmark.setOnClickListener { listener?.invoke(item, true) }
+        this.setOnClickListener { listener?.invoke(item, false) }
     }
 }

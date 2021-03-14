@@ -4,11 +4,9 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
 import kotlinx.android.synthetic.main.layout_bottombar.*
-import ru.skillbranch.skillarticles.viewmodels.base.Notify
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.selectDestination
 import ru.skillbranch.skillarticles.extensions.selectItem
@@ -17,6 +15,7 @@ import ru.skillbranch.skillarticles.viewmodels.RootState
 import ru.skillbranch.skillarticles.viewmodels.RootViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
+import ru.skillbranch.skillarticles.viewmodels.base.Notify
 
 class RootActivity : BaseActivity<RootViewModel>() {
 

@@ -1,6 +1,5 @@
 package ru.skillbranch.skillarticles.ui.delegates
 
-import android.view.View
 import ru.skillbranch.skillarticles.ui.base.Binding
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

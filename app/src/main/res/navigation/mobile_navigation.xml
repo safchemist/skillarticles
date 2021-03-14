@@ -26,14 +26,14 @@
             android:name="category_icon"
             app:argType="string" />
         <argument
-            android:name="date"
-            app:argType="java.util.Date" />
-        <argument
             android:name="poster"
             app:argType="string" />
         <argument
             android:name="title"
             app:argType="string" />
+        <argument
+            android:name="date"
+            app:argType="java.util.Date" />
     </fragment>
     <fragment
         android:id="@+id/nav_articles"
